@@ -1,0 +1,224 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String   @id
+  name          String
+  email         String
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  sessions Session[]
+  accounts Account[]
+
+  friends  Friend[] @relation("UserFriend")
+  friendOf Friend[] @relation("FriendUser")
+
+  sentFriendRequests     FriendRequest[] @relation("FriendSender")
+  receivedFriendRequests FriendRequest[] @relation("FriendReceiver")
+
+  conversationMembers ConversationMember[]
+  messages            Message[]
+  messageReceipts     MessageReceipt[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// ================= FRIEND SYSTEM =================
+
+model FriendRequest {
+  id         String       @id @default(cuid())
+  senderId   String
+  receiverId String
+  status     FriendStatus @default(PENDING)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  sender   User @relation("FriendSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("FriendReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([senderId, receiverId])
+  @@index([receiverId])
+  @@map("friend_request")
+}
+
+enum FriendStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  BLOCKED
+}
+
+model Friend {
+  id        String   @id @default(cuid())
+  userId    String
+  friendId  String
+  createdAt DateTime @default(now())
+
+  user   User @relation("UserFriend", fields: [userId], references: [id], onDelete: Cascade)
+  friend User @relation("FriendUser", fields: [friendId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, friendId])
+  @@index([friendId])
+  @@map("friend")
+}
+
+// ================= CHAT SYSTEM MODELS =================
+
+model Conversation {
+  id        String   @id @default(cuid())
+  type      ChatType @default(PRIVATE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members  ConversationMember[]
+  messages Message[]
+
+  @@map("conversation")
+}
+
+enum ChatType {
+  PRIVATE
+  GROUP
+}
+
+model ConversationMember {
+  id             String     @id @default(cuid())
+  conversationId String
+  userId         String
+  role           MemberRole @default(MEMBER)
+  joinedAt       DateTime   @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+  @@map("conversation_member")
+}
+
+enum MemberRole {
+  ADMIN
+  MEMBER
+}
+
+model Message {
+  id             String      @id @default(cuid())
+  conversationId String
+  senderId       String
+  content        String?
+  type           MessageType @default(TEXT)
+  createdAt      DateTime    @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  attachments Attachment[]
+  receipts    MessageReceipt[]
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@map("message")
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  VIDEO
+  AUDIO
+  FILE
+  VOICE
+}
+
+model Attachment {
+  id        String      @id @default(cuid())
+  messageId String
+  url       String
+  type      MessageType
+  size      Int?
+  createdAt DateTime    @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@map("attachment")
+}
+
+model MessageReceipt {
+  id        String        @id @default(cuid())
+  messageId String
+  userId    String
+  status    ReceiptStatus @default(SENT)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([userId])
+  @@map("message_receipt")
+}
+
+enum ReceiptStatus {
+  SENT
+  DELIVERED
+  READ
+}
