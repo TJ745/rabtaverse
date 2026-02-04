@@ -12,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signUp } from "@/lib/auth-client";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -55,6 +56,11 @@ export default function Register() {
       <Card className="w-full max-w-md border-gray-200 shadow-lg bg-linear-to-b from-black via-zinc-950 to-black">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-white">
+            <Link href="/">
+              <Button variant="link" className="mr-4 cursor-pointer text-white">
+                <ArrowLeft />
+              </Button>
+            </Link>
             Sign Up
           </CardTitle>
           <CardDescription className="text-zinc-400">
