@@ -48,7 +48,7 @@ export async function getChatList() {
       name: otherUser?.name || "Group",
       avatar: otherUser?.image,
       lastMessage: conv.messages[0]?.content || "",
-      updatedAt: conv.updatedAt,
+      // updatedAt: conv.updatedAt,
     };
   });
 }

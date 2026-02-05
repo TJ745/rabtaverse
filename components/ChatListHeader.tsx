@@ -13,25 +13,28 @@ import { signOut, useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import ProfileDialog from "./ProfileModal";
+import { ExtendedUser } from "@/types/types";
 
 export default function ChatListHeader() {
   const { data: session } = useSession();
   const router = useRouter();
   const [profileOpen, setProfileOpen] = useState(false);
 
-  if (!session?.user) return null;
+  // if (!session?.user) return null;
+
+  const user = session?.user as ExtendedUser | undefined;
+
+  if (!user) return null;
 
   return (
     <>
       <div className="flex items-center justify-between p-3">
         <div className="flex items-center gap-2">
           <Avatar>
-            <AvatarImage src={session.user.image || undefined} />
-            <AvatarFallback>
-              {session.user.name[0].toUpperCase()}
-            </AvatarFallback>
+            <AvatarImage src={user.image || undefined} />
+            <AvatarFallback>{user.name[0].toUpperCase()}</AvatarFallback>
           </Avatar>
-          <span className="font-semibold text-white">{session.user.name}</span>
+          <span className="font-semibold text-white">{user.name}</span>
         </div>
 
         <DropdownMenu>
@@ -76,11 +79,11 @@ export default function ChatListHeader() {
         open={profileOpen}
         onOpenChange={setProfileOpen}
         user={{
-          id: session.user.id,
-          name: session.user.name,
-          email: session.user.email,
-          image: session.user.image,
-          about: session.user.about,
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          image: user.image,
+          about: user.about || null,
         }}
       />
     </>

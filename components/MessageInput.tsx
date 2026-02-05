@@ -10,6 +10,17 @@ export default function MessageInput({
 }) {
   const [text, setText] = useState("");
 
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setText(e.target.value);
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!text.trim()) return;
+    onSend(text);
+    setText("");
+  }
+
   return (
     <div className="p-3 border-t flex items-center gap-2">
       <Button variant="ghost" size="icon" className="cursor-pointer text-white">
@@ -19,30 +30,17 @@ export default function MessageInput({
         <Paperclip className="h-5 w-5" />
       </Button>
 
-      <Input
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder="Type a message"
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && text.trim()) {
-            onSend(text);
-            setText("");
-          }
-        }}
-        className="text-white"
-      />
-
-      <Button
-        size="icon"
-        onClick={() => {
-          if (!text.trim()) return;
-          onSend(text);
-          setText("");
-        }}
-        className="cursor-pointer text-white"
-      >
-        <Send className="h-5 w-5" />
-      </Button>
+      <form onSubmit={handleSubmit} className="flex-1 flex items-center gap-2">
+        <Input
+          value={text}
+          onChange={handleChange}
+          className="text-white"
+          placeholder="Type a message..."
+        />
+        <Button type="submit" className="cursor-pointer text-white" size="icon">
+          <Send className="h-5 w-5" />
+        </Button>
+      </form>
 
       <Button variant="ghost" size="icon" className="cursor-pointer text-white">
         <Mic className="h-5 w-5" />

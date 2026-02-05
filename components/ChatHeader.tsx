@@ -1,15 +1,19 @@
 import { Phone, Video } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
+import type { Chat } from "@/types/types";
 
-type Chat = {
-  id: string;
-  name: string;
-  avatar?: string;
-  lastMessage: string;
+type ChatHeaderProps = {
+  chat?: Chat;
+  online?: boolean;
+  typing?: boolean;
 };
 
-export default function ChatHeader({ chat }: { chat?: Chat }) {
+export default function ChatHeader({
+  chat,
+  online = false,
+  typing = false,
+}: ChatHeaderProps) {
   if (!chat)
     return (
       <div className="h-14 border-b flex items-center px-4">Select a chat</div>
@@ -24,7 +28,14 @@ export default function ChatHeader({ chat }: { chat?: Chat }) {
         </Avatar>
         <div>
           <p className="font-medium leading-none text-white">{chat.name}</p>
-          <p className="text-xs text-zinc-400">online</p>
+          {/* <p className="text-xs text-zinc-400">online</p> */}
+          {typing ? (
+            <span className="text-zinc-400 text-xs">Typing...</span>
+          ) : online ? (
+            <span className="text-green-400 text-xs">Online</span>
+          ) : (
+            <span className="text-zinc-500 text-xs">Offline</span>
+          )}
         </div>
       </div>
 

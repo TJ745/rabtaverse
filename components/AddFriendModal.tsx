@@ -29,14 +29,28 @@ export default function AddFriendDialog({
   const [users, setUsers] = useState<User[]>([]);
 
   useEffect(() => {
-    if (!query) return setUsers([]);
+    let active = true;
 
-    const t = setTimeout(async () => {
-      const res = await searchUsers(query);
-      setUsers(res);
-    }, 300);
+    const fetchUsers = async () => {
+      if (!query) {
+        if (active) setUsers([]); // ✅ inside function, not top-level
+        return;
+      }
 
-    return () => clearTimeout(t);
+      // debounce
+      const t = setTimeout(async () => {
+        const res = await searchUsers(query);
+        if (active) setUsers(res);
+      }, 400);
+
+      return () => clearTimeout(t);
+    };
+
+    fetchUsers(); // call async function
+
+    return () => {
+      active = false; // prevent state update after unmount
+    };
   }, [query]);
 
   return (

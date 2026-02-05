@@ -4,17 +4,32 @@ import { useEffect, useState } from "react";
 import { getFriendRequests, acceptFriendRequest } from "@/app/actions/friends";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { FriendRequest } from "@/types/types";
 
 export default function FriendRequests() {
-  const [requests, setRequests] = useState<any[]>([]);
-
-  async function load() {
-    setRequests(await getFriendRequests());
-  }
+  const [requests, setRequests] = useState<FriendRequest[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let active = true;
+
+    const load = async () => {
+      const data = await getFriendRequests();
+      if (active) {
+        setRequests(data);
+        setLoading(false);
+      }
+    };
+
     load();
+
+    return () => {
+      active = false;
+    };
   }, []);
+
+  if (loading) return null;
+  if (!requests.length) return null;
 
   return (
     <div className="p-3 space-y-2">
@@ -35,7 +50,7 @@ export default function FriendRequests() {
             size="sm"
             onClick={async () => {
               await acceptFriendRequest(r.id);
-              load();
+              setRequests((prev) => prev.filter((req) => req.id !== r.id));
             }}
             className="cursor-pointer"
           >

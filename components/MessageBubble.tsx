@@ -1,9 +1,4 @@
-type Message = {
-  id: string;
-  fromMe: boolean;
-  text: string;
-  time: string;
-};
+import { Message } from "@/types/types";
 
 export default function MessageBubble({ msg }: { msg: Message }) {
   return (
