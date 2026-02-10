@@ -7,7 +7,7 @@ import ChatSearch from "@/components/ChatSearch";
 import MessageInput from "@/components/MessageInput";
 import MessageList from "@/components/MessageList";
 import { Separator } from "@/components/ui/separator";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getMessages, sendMessage } from "../actions/messages";
 import type { Chat, Message } from "@/types/types";
 import useChatSocket from "@/lib/useChatSocket";
@@ -18,31 +18,37 @@ export default function Chat() {
 
   const userId = session?.user?.id;
 
-  const [activeChat, setActiveChat] = useState<Chat | undefined>(undefined);
+  const [activeChat, setActiveChat] = useState<Chat>();
   const [messages, setMessages] = useState<Message[]>([]);
   const [search, setSearch] = useState("");
 
   const {
     sendMessage: sendMessageSocket,
+    sendTyping,
+    sendStopTyping,
     markRead,
+    joinRoom,
     onlineUsers,
     typingUsers,
   } = useChatSocket(userId);
 
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
   const loadMessages = useCallback(
-    async (id: string) => {
-      const msgs = await getMessages(id);
+    async (conversationId: string) => {
+      const msgs = await getMessages(conversationId);
       setMessages(msgs);
-      markRead(id); // Mark messages as read
-      // joinConversation(conversationId);
+      markRead(conversationId); // Mark messages as read
     },
     [markRead],
   );
 
   useEffect(() => {
     if (!activeChat?.id) return;
-    loadMessages(activeChat.id);
-  }, [activeChat?.id, loadMessages]);
+
+    loadMessages(activeChat.id); // load previous messages
+    joinRoom(activeChat.id); // join the socket room
+  }, [activeChat?.id, joinRoom, loadMessages]);
 
   useEffect(() => {
     const handler = (e: CustomEvent<Message>) => {
@@ -57,29 +63,54 @@ export default function Chat() {
       window.removeEventListener("new_message", handler as EventListener);
   }, [activeChat?.id]);
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
   const handleSend = async (text: string) => {
     if (!activeChat?.id) return;
 
-    await sendMessage(activeChat.id, text);
-    sendMessageSocket(activeChat.id, text);
+    // await sendMessage(activeChat.id, text);
+    // sendMessageSocket(activeChat.id, text);
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        conversationId: activeChat.id,
-        fromMe: true,
-        text,
-        time: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      },
-    ]);
+    // setMessages((prev) => [
+    //   ...prev,
+    //   {
+    //     id: Date.now().toString(),
+    //     conversationId: activeChat.id,
+    //     fromMe: true,
+    //     text,
+    //     time: new Date().toLocaleTimeString([], {
+    //       hour: "2-digit",
+    //       minute: "2-digit",
+    //     }),
+    //   },
+    // ]);
+    const newMsg: Message = {
+      id: Date.now().toString(),
+      conversationId: activeChat.id,
+      fromMe: true,
+      text,
+      time: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    };
+    setMessages((prev) => [...prev, newMsg]);
+
+    // Send to server
+    await sendMessage(activeChat.id, text); // API persistence
+    sendMessageSocket(activeChat.id, text); // Socket broadcast
+  };
+
+  const handleTyping = (text: string) => {
+    if (!activeChat?.id) return;
+    if (text) sendTyping(activeChat.id);
+    else sendStopTyping(activeChat.id);
   };
 
   return (
-    <div className="h-screen w-full flex">
+    <div className="h-screen w-full flex bg-zinc-900">
       {/* Left Sidebar */}
       <div className="w-[320px] border-r flex flex-col">
         <ChatListHeader />
@@ -91,7 +122,8 @@ export default function Chat() {
             search={search}
             activeId={activeChat?.id}
             userId={userId}
-            onlineUsers={[]}
+            onlineUsers={onlineUsers}
+            typingUsers={typingUsers}
           />
         )}
       </div>
@@ -115,8 +147,11 @@ export default function Chat() {
               : false
           }
         />
-        <MessageList messages={messages} />
-        <MessageInput onSend={handleSend} />
+        <div className="flex-1 overflow-y-auto">
+          <MessageList messages={messages} />
+          <div ref={messagesEndRef} />
+        </div>
+        <MessageInput onSend={handleSend} onTyping={handleTyping} />
       </div>
     </div>
   );

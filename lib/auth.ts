@@ -30,3 +30,8 @@ export async function signOut() {
     redirect("/login");
   }
 }
+
+export async function getToken() {
+  const session = await getSession();
+  return session?.session.token; // or session?.token depending on your schema
+}

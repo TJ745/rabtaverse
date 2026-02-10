@@ -1,53 +1,33 @@
-import { Server } from "socket.io";
+import { getSession } from "@/lib/auth"; // your betterAuth helper
+import { io, Socket } from "socket.io-client";
 
-let io: Server | null = null;
+export let socket: Socket | null = null;
 
-export function getIO() {
-  if (!io) {
-    console.log("⚡ Initializing Socket.IO");
+export async function initSocket(userId: string) {
+  const session = await getSession();
+  const token = session?.session?.token; // Make sure this is where your JWT is stored
 
-    io = new Server({
-      path: "/api/socket_io",
-      cors: { origin: "*" },
-    });
-
-    io.on("connection", (socket) => {
-      console.log("✅ Socket connected:", socket.id);
-
-      socket.on("join", (userId: string) => {
-        socket.data.userId = userId;
-        socket.join(userId);
-
-        io!.emit(
-          "online_users",
-          Array.from(io!.sockets.sockets.values())
-            .map((s) => s.data?.userId)
-            .filter(Boolean),
-        );
-      });
-
-      socket.on("send_message", (payload) => {
-        socket.broadcast.emit("receive_message", {
-          id: Date.now().toString(),
-          conversationId: payload.conversationId,
-          fromMe: false,
-          text: payload.content,
-          time: new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-        });
-      });
-
-      socket.on("typing", (payload) => {
-        socket.broadcast.emit("typing", payload);
-      });
-
-      socket.on("disconnect", () => {
-        console.log("❌ Socket disconnected:", socket.id);
-      });
-    });
+  if (!token) {
+    console.warn("⚠️ No token found. Socket will not connect.");
+    return;
   }
 
-  return io;
+  socket = io("http://localhost:4000", {
+    autoConnect: true,
+    auth: { token },
+    transports: ["websocket"],
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000,
+  });
+
+  socket.on("connect", () => console.log("✅ Socket connected", socket?.id));
+  socket.on("disconnect", (reason) =>
+    console.log("⚡ Socket disconnected", reason),
+  );
+  socket.on("connect_error", (err) =>
+    console.error("⚡ Socket error:", err.message),
+  );
+
+  return socket;
 }
