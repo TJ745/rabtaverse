@@ -46,8 +46,13 @@ export default function Chat() {
   useEffect(() => {
     if (!activeChat?.id) return;
 
-    loadMessages(activeChat.id); // load previous messages
-    joinRoom(activeChat.id); // join the socket room
+    // Wrap async state updates inside an inner function
+    const init = async () => {
+      await loadMessages(activeChat.id); // load previous messages
+      joinRoom(activeChat.id); // join the socket room
+    };
+
+    init();
   }, [activeChat?.id, joinRoom, loadMessages]);
 
   useEffect(() => {
@@ -70,22 +75,6 @@ export default function Chat() {
   const handleSend = async (text: string) => {
     if (!activeChat?.id) return;
 
-    // await sendMessage(activeChat.id, text);
-    // sendMessageSocket(activeChat.id, text);
-
-    // setMessages((prev) => [
-    //   ...prev,
-    //   {
-    //     id: Date.now().toString(),
-    //     conversationId: activeChat.id,
-    //     fromMe: true,
-    //     text,
-    //     time: new Date().toLocaleTimeString([], {
-    //       hour: "2-digit",
-    //       minute: "2-digit",
-    //     }),
-    //   },
-    // ]);
     const newMsg: Message = {
       id: Date.now().toString(),
       conversationId: activeChat.id,
@@ -109,6 +98,24 @@ export default function Chat() {
     else sendStopTyping(activeChat.id);
   };
 
+  const hasMembers = !!activeChat?.members?.length;
+
+  // Calculate online and typing status safely
+  const isOnline = hasMembers
+    ? activeChat.members?.some(
+        (m) =>
+          m.userId.toString() !== userId &&
+          onlineUsers.map(String).includes(m.userId.toString()),
+      )
+    : false;
+
+  const isTyping = hasMembers
+    ? activeChat.members?.some(
+        (m) =>
+          m.userId.toString() !== userId && typingUsers[m.userId.toString()],
+      )
+    : false;
+
   return (
     <div className="h-screen w-full flex bg-zinc-900">
       {/* Left Sidebar */}
@@ -130,23 +137,7 @@ export default function Chat() {
 
       {/* Right Chat Area */}
       <div className="flex-1 flex flex-col">
-        <ChatHeader
-          chat={activeChat}
-          online={
-            activeChat
-              ? activeChat.members?.some(
-                  (m) => m.userId !== userId && onlineUsers.includes(m.userId),
-                )
-              : false
-          }
-          typing={
-            activeChat
-              ? activeChat.members?.some(
-                  (m) => m.userId !== userId && typingUsers[m.userId],
-                )
-              : false
-          }
-        />
+        <ChatHeader chat={activeChat} online={isOnline} typing={isTyping} />
         <div className="flex-1 overflow-y-auto">
           <MessageList messages={messages} />
           <div ref={messagesEndRef} />

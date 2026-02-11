@@ -69,12 +69,17 @@ export default function ChatList({
       {filteredChats.map((chat) => {
         const otherMemberId =
           chat.type === "PRIVATE"
-            ? chat.members?.find((m: ChatMember) => m.userId !== userId)?.userId
+            ? chat.members
+                ?.find(
+                  (m: ChatMember) => m.userId.toString() !== userId.toString(),
+                )
+                ?.userId.toString()
             : undefined;
 
         const isOnline = otherMemberId
-          ? onlineUsers.includes(otherMemberId)
+          ? onlineUsers.map(String).includes(otherMemberId)
           : false;
+
         const isTyping = otherMemberId ? typingUsers[otherMemberId] : false;
         return (
           <button
