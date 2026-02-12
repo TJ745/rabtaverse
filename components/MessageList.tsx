@@ -8,7 +8,6 @@ import { ScrollArea } from "./ui/scroll-area";
 export default function MessageList({ messages }: { messages: Message[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Auto scroll to bottom on new messages
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);

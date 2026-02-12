@@ -29,9 +29,7 @@ export default function ChatHeader({
     <div className="h-14 border-b flex items-center justify-between px-4 bg-zinc-900">
       <div className="flex items-center gap-3">
         <Avatar>
-          <AvatarImage
-            src={chat.avatar || `https://i.pravatar.cc/150?u=${chat.id}`}
-          />
+          <AvatarImage src={chat.avatar || undefined} />
           <AvatarFallback>{chat.name[0]}</AvatarFallback>
         </Avatar>
         <div>

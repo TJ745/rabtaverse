@@ -12,7 +12,7 @@ export async function initSocket(userId: string) {
     return;
   }
 
-  socket = io("http://localhost:4000", {
+  socket = io("http://192.168.70.115:4000", {
     autoConnect: true,
     auth: { token },
     transports: ["websocket"],

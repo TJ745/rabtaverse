@@ -19,7 +19,7 @@ export default function useChatSocket(userId?: string) {
 
     console.log("⚡ Connecting socket...");
 
-    const socket = io("http://localhost:4000", {
+    const socket = io("http://192.168.70.115:4000", {
       autoConnect: true,
       transports: ["websocket"],
       reconnection: true,

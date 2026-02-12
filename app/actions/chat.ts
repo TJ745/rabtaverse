@@ -41,14 +41,19 @@ export async function getChatList() {
   });
 
   return conversations.map((conv) => {
-    const otherUser = conv.members.find((m) => m.userId !== userId)?.user;
+    const otherUser = conv.members.find((m) => m.userId !== userId);
 
     return {
       id: conv.id,
-      name: otherUser?.name || "Group",
-      avatar: otherUser?.image,
+      name: otherUser?.user.name || "Group",
+      avatar: otherUser?.user.image,
       lastMessage: conv.messages[0]?.content || "",
-      members: conv.members.map((m) => ({ id: m.id, userId: m.userId })),
+      members: conv.members.map((m) => ({
+        id: m.id,
+        userId: m.userId,
+        name: m.user.name,
+        image: m.user.image,
+      })),
     };
   });
 }

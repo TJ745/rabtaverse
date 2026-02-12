@@ -55,7 +55,7 @@ export default function AddFriendDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="bg-zinc-900 text-white">
         <DialogHeader>
           <DialogTitle>Add Friend</DialogTitle>
         </DialogHeader>
@@ -81,6 +81,8 @@ export default function AddFriendDialog({
               </div>
 
               <Button
+                variant="ghost"
+                className="cursor-pointer"
                 size="sm"
                 onClick={async () => {
                   const res = await sendFriendRequest(u.id);

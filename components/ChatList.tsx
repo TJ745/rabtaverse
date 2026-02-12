@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { ScrollArea } from "./ui/scroll-area";
 import { getChatList } from "@/app/actions/chat";
 import FriendRequests from "./FriendRequests";
-import type { Chat, ChatMember } from "@/types/types";
+import type { Chat } from "@/types/types";
 
 type ChatListProps = {
   onSelect: (chat: Chat) => void;
@@ -67,26 +67,22 @@ export default function ChatList({
     <ScrollArea className="h-[calc(100vh-120px)]">
       <FriendRequests />
       {filteredChats.map((chat) => {
-        const otherMemberId =
-          chat.type === "PRIVATE"
-            ? chat.members
-                ?.find(
-                  (m: ChatMember) => m.userId.toString() !== userId.toString(),
-                )
-                ?.userId.toString()
-            : undefined;
+        const otherMemberId = chat.members
+          ?.find((m) => m.userId.toString() !== userId.toString())
+          ?.userId.toString();
 
         const isOnline = otherMemberId
           ? onlineUsers.map(String).includes(otherMemberId)
           : false;
 
         const isTyping = otherMemberId ? typingUsers[otherMemberId] : false;
+
         return (
           <button
             key={chat.id}
             onClick={() => onSelect(chat)}
-            className={`w-full flex items-center gap-3 p-3 hover:bg-primary text-left rounded-lg cursor-pointer m-1 ${
-              activeId === chat.id ? "bg-primary" : ""
+            className={`w-full flex items-center gap-3 p-3 hover:bg-zinc-800 text-left rounded-lg cursor-pointer m-1 ${
+              activeId === chat.id ? "bg-zinc-800" : ""
             }`}
           >
             <Avatar>
@@ -94,18 +90,20 @@ export default function ChatList({
               <AvatarFallback>{chat.name[0].toUpperCase()}</AvatarFallback>
             </Avatar>
 
-            <div className="flex-1">
-              <p className="font-medium leading-none text-white">{chat.name}</p>
+            <div className="flex-1 space-y-1">
+              <p className="flex items-center gap-2 font-medium leading-none text-white">
+                {isOnline && !isTyping && (
+                  <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
+                )}
+                {chat.name}
+              </p>
               <p className="text-sm text-zinc-400 truncate">
                 {isTyping ? (
-                  <span className="italic text-green-400">Typing...</span>
+                  <span className="italic">Typing...</span>
                 ) : (
                   chat.lastMessage
                 )}
               </p>
-              {isOnline && !isTyping && (
-                <span className="text-xs text-green-400">Online</span>
-              )}
             </div>
           </button>
         );

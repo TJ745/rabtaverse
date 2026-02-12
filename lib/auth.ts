@@ -13,12 +13,46 @@ export const auth = betterAuth({
   plugins: [nextCookies()],
 });
 
+// export async function getSession() {
+//   const result = await auth.api.getSession({
+//     headers: await headers(),
+//   });
+
+//   return result;
+// }
+
 export async function getSession() {
   const result = await auth.api.getSession({
     headers: await headers(),
   });
 
-  return result;
+  if (!result?.session) return null;
+
+  // Fetch full user profile from DB
+  const user = await prisma.user.findUnique({
+    where: { id: result.session.userId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      image: true,
+      about: true, // <-- include the about field
+    },
+  });
+
+  if (!user) return null;
+
+  // Merge user into session
+  return {
+    ...result,
+    session: {
+      ...result.session,
+      user: {
+        ...result.user,
+        about: user.about || null,
+      },
+    },
+  };
 }
 
 export async function signOut() {

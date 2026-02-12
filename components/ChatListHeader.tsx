@@ -9,20 +9,18 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Separator } from "./ui/separator";
-import { signOut, useSession } from "@/lib/auth-client";
+import { signOut } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import ProfileDialog from "./ProfileModal";
-import { ExtendedUser } from "@/types/types";
+import { useFullSession } from "@/hooks/useFullSession";
 
 export default function ChatListHeader() {
-  const { data: session } = useSession();
+  const session = useFullSession();
   const router = useRouter();
   const [profileOpen, setProfileOpen] = useState(false);
 
-  // if (!session?.user) return null;
-
-  const user = session?.user as ExtendedUser | undefined;
+  const user = session?.user;
 
   if (!user) return null;
 
@@ -34,33 +32,38 @@ export default function ChatListHeader() {
             <AvatarImage src={user.image || undefined} />
             <AvatarFallback>{user.name[0].toUpperCase()}</AvatarFallback>
           </Avatar>
-          <span className="font-semibold text-white">{user.name}</span>
+          <div className="flex flex-col">
+            <span className="font-semibold text-white">{user.name}</span>
+            <span className="font-semibold text-zinc-400 text-xs">
+              {user.about}
+            </span>
+          </div>
         </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-              variant="ghost"
+              variant="link"
               size="icon"
               className="text-white cursor-pointer"
             >
               <MoreVertical className="h-5 w-5" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="bg-primary  ">
             <DropdownMenuItem
-              className="cursor-pointer"
+              className="cursor-pointer hover:bg-zinc-700 text-white"
               onClick={() => setProfileOpen(true)}
             >
-              <User /> Profile
+              <User className="text-white" /> Profile
             </DropdownMenuItem>
 
-            <DropdownMenuItem className="cursor-pointer">
-              <Settings /> Settings
+            <DropdownMenuItem className="cursor-pointer hover:bg-zinc-700 text-white">
+              <Settings className="text-white" /> Settings
             </DropdownMenuItem>
             <Separator />
             <DropdownMenuItem
-              className="hover:text-red-600 cursor-pointer"
+              className="hover:text-red-600 cursor-pointer hover:bg-zinc-700 text-white"
               onClick={async () => {
                 const result = await signOut();
                 if (result.data) {
@@ -70,7 +73,7 @@ export default function ChatListHeader() {
                 }
               }}
             >
-              <LogOut /> Logout
+              <LogOut className="text-white" /> Logout
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -83,7 +86,7 @@ export default function ChatListHeader() {
           name: user.name,
           email: user.email,
           image: user.image,
-          about: user.about || null,
+          about: user.about,
         }}
       />
     </>

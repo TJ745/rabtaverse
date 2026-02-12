@@ -33,6 +33,6 @@ export type ExtendedUser = {
   id: string;
   name: string;
   email: string;
-  image?: string | null;
-  about?: string | null;
+  image?: string;
+  about?: string;
 };
